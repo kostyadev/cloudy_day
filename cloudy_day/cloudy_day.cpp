@@ -4,18 +4,19 @@
 
 using namespace std;
 
-struct City
-{
-	long loc;
-	long pop;
-	City(long l = 0, long p = 0) { loc = l; pop = p; }
-};
-
 struct Cloud
 {
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
+};
+
+struct City
+{
+	long loc;
+	long pop;
+	City(long l = 0, long p = 0) { loc = l; pop = p; }
+	vector<const Cloud*> clouds;
 };
 
 // binary search in sorted array
@@ -51,24 +52,44 @@ long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs,
 
 	sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
 
+	cout << "cities:" << endl;
 	for (auto& c : cities)
 		cout << c.loc << " " << c.pop << endl;
 
+	cout << "clouds:" << endl;
 	for (auto& c : clouds)
 		cout << c.loc << " " << c.range << endl;
 
-	//
-	auto p = getNearestItemPos(8, cities);
+	for (const auto& cloud : clouds)
+	{
+		const auto cityIdx = getNearestItemPos(cloud.loc, cities);
+
+		//search all cities that overriden by this cloud on right side
+		auto rCityIdx = cityIdx;
+		while (rCityIdx < cities.size() && cities[rCityIdx].loc <= (cloud.loc + cloud.range))
+		{
+			cities[rCityIdx].clouds.push_back(&cloud);
+			rCityIdx++;
+		}
+
+		//search on left side
+		auto lCityIdx = cityIdx - 1;
+		while (lCityIdx >= 0 && lCityIdx < cities.size() && cities[lCityIdx].loc >= (cloud.loc - cloud.range))
+		{
+			cities[lCityIdx].clouds.push_back(&cloud);
+			lCityIdx--;
+		}
+	}
 
 	return 0;
 }
 
 int main()
 {
-	vector<long> city_populations = { 10, 50, 100, 100 };
+	vector<long> city_populations = { 10, 50, 100, 90 };
 	vector<long> city_locations = { 5, 7, 9, 15 };
-	vector<long> cloud_locations = { 4, 7, 10 };
-	vector<long> cloud_ranges = { 1, 1, 1 };
+	vector<long> cloud_locations = { 4, 7, 10, 16 };
+	vector<long> cloud_ranges = { 1, 1, 1, 1 };
 	long result = maximumPeople(city_populations, city_locations, cloud_locations, cloud_ranges);
 	cout << endl << result << "\n";
 }
