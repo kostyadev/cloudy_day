@@ -4,11 +4,14 @@
 
 using namespace std;
 
+struct City;
+
 struct Cloud
 {
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
+	vector<const City*> cities;
 };
 
 struct City
@@ -60,7 +63,7 @@ long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs,
 	for (auto& c : clouds)
 		cout << c.loc << " " << c.range << endl;
 
-	for (const auto& cloud : clouds)
+	for (auto& cloud : clouds)
 	{
 		const auto cityIdx = getNearestItemPos(cloud.loc, cities);
 
@@ -69,6 +72,7 @@ long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs,
 		while (rCityIdx < cities.size() && cities[rCityIdx].loc <= (cloud.loc + cloud.range))
 		{
 			cities[rCityIdx].clouds.push_back(&cloud);
+			cloud.cities.push_back(&cities[rCityIdx]);
 			rCityIdx++;
 		}
 
@@ -77,8 +81,27 @@ long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs,
 		while (lCityIdx >= 0 && lCityIdx < cities.size() && cities[lCityIdx].loc >= (cloud.loc - cloud.range))
 		{
 			cities[lCityIdx].clouds.push_back(&cloud);
+			cloud.cities.push_back(&cities[lCityIdx]);
 			lCityIdx--;
 		}
+	}
+
+	cout << endl;
+	for (size_t i = 0; i < cities.size(); ++i)
+	{
+		cout << "cities[" << i << "], {loc " << cities[i].loc << ", pop " << cities[i].pop << "}, clouds [";
+		for (const auto& cloud : cities[i].clouds)
+			cout << "{loc " << cloud->loc << ", range " << cloud->range << "}";
+		cout << "]" << endl;
+	}
+
+	cout << endl;
+	for (size_t i = 0; i < clouds.size(); ++i)
+	{
+		cout << "clouds[" << i << "], {loc " << clouds[i].loc << ", range " << clouds[i].range << "}, cities [";
+		for (const auto& city : clouds[i].cities)
+			cout << "{loc " << city->loc << ", pop " << city->pop << "}";
+		cout << "]" << endl;
 	}
 
 	return 0;
