@@ -16,7 +16,7 @@ struct Cloud
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
-	list<const City*> cities;
+	vector<const City*> cities;
 };
 
 struct City
@@ -24,7 +24,7 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	list<const Cloud*> clouds;
+	vector<const Cloud*> clouds;
 };
 
 // binary search in sorted array
@@ -72,21 +72,23 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	{
 		const auto cityIdx = getNearestItemPos(cloud.loc, cities);
 
-		//search all cities that overriden by this cloud on right side
+		//search all cities that covered by this cloud on right side
 		auto rCityIdx = cityIdx;
-		while (rCityIdx < cities.size() && cities[rCityIdx].loc <= (cloud.loc + cloud.range))
+		while (rCityIdx < cities.size() && cities[rCityIdx].loc <= (cloud.loc + cloud.range) && cities[rCityIdx].loc >= (cloud.loc - cloud.range))
 		{
 			cities[rCityIdx].clouds.push_back(&cloud);
 			cloud.cities.push_back(&cities[rCityIdx]);
+
 			rCityIdx++;
 		}
 
 		//search on left side
 		auto lCityIdx = cityIdx - 1;
-		while (lCityIdx >= 0 && lCityIdx < cities.size() && cities[lCityIdx].loc >= (cloud.loc - cloud.range))
+		while (lCityIdx >= 0 && lCityIdx < cities.size() && cities[lCityIdx].loc <= (cloud.loc + cloud.range) && cities[lCityIdx].loc >= (cloud.loc - cloud.range))
 		{
 			cities[lCityIdx].clouds.push_back(&cloud);
 			cloud.cities.push_back(&cities[lCityIdx]);
+
 			lCityIdx--;
 		}
 	}
@@ -111,23 +113,17 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 	// calculate count of cities that is not covered by any cloud
 	long long alreadySunnyPop = 0;
-	long alreadySunnyPopPrevVal = 0;
 	for (const City& city : cities)
 	{
 		if (city.clouds.size() == 0)
 			alreadySunnyPop += city.pop;
-
-		if (alreadySunnyPop < 0)
-			int a = 1;
-
-		alreadySunnyPopPrevVal = alreadySunnyPop;
 	}
 
 	// calculate maximum people that can be sunny by removing one cloud
-	long maxSunnyPop = 0;
+	long long maxSunnyPop = 0;
 	for (const Cloud& cloud : clouds)
 	{
-		long curSunnyPop = 0;
+		long long curSunnyPop = 0;
 		for (const City* city : cloud.cities)
 		{ 
 			if (city->clouds.size() == 1 && *(city->clouds.begin()) == &cloud)
