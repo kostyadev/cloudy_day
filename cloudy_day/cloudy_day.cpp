@@ -104,15 +104,29 @@ long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs,
 		cout << "]" << endl;
 	}
 
-	return 0;
+	long maxSunnyPop = 0;
+	for (const Cloud& cloud : clouds)
+	{
+		long curSunnyPop = 0;
+		for (const City* city : cloud.cities)
+		{ 
+			if (city->clouds.size() == 1 && city->clouds[0] == &cloud)
+				curSunnyPop += city->pop;
+		}
+
+		if (curSunnyPop > maxSunnyPop)
+			maxSunnyPop = curSunnyPop;
+	}
+
+	return maxSunnyPop;
 }
 
 int main()
 {
 	vector<long> city_populations = { 10, 50, 100, 90 };
 	vector<long> city_locations = { 5, 7, 9, 15 };
-	vector<long> cloud_locations = { 4, 7, 10, 16 };
-	vector<long> cloud_ranges = { 1, 1, 1, 1 };
+	vector<long> cloud_locations = { 4, 5, 7, 10, 15, 16 };
+	vector<long> cloud_ranges = { 1, 2, 1, 1, 1, 1 };
 	long result = maximumPeople(city_populations, city_locations, cloud_locations, cloud_ranges);
 	cout << endl << result << "\n";
 }
