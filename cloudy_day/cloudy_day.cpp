@@ -4,6 +4,7 @@
 #include <list>
 #include <algorithm>
 #include <string>
+#include <time.h>
 
 using namespace std;
 
@@ -58,7 +59,7 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		clouds.emplace_back(cloud_locs[i], cloud_ranges[i]);
 	}
 
-	sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
+	//sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
 
 	/*cout << "cities:" << endl;
 	for (auto& c : cities)
@@ -158,7 +159,9 @@ int main()
 
 int main()
 {
-	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input26.txt", std::ofstream::in);
+	const auto begin_time = clock();
+
+	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input20.txt", std::ofstream::in);
 
 	int n;
 	fin >> n;
@@ -220,9 +223,15 @@ int main()
 		r[i] = r_item;
 	}
 
+
+	std::cout << "read and parse time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << endl;
+
+	const auto time2 = clock();
+
 	long long result = maximumPeople(p, x, y, r);
 
 	cout << result << "\n";
+	std::cout << "maximumPeople() time: " << float(clock() - time2) / CLOCKS_PER_SEC << endl;
 
 	return 0;
 }
