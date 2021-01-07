@@ -17,7 +17,9 @@ struct Cloud
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
-	list<const City*> cities;
+	vector<const City*> cities;
+	const City* firstCity = nullptr;
+	const City* lastCity = nullptr;
 };
 
 struct City
@@ -25,7 +27,9 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	list<const Cloud*> clouds;
+	vector<const Cloud*> clouds;
+	const Cloud* firstCloud = nullptr;
+	const Cloud* lastCloud = nullptr;
 };
 
 // binary search in sorted array
@@ -59,7 +63,7 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		clouds.emplace_back(cloud_locs[i], cloud_ranges[i]);
 	}
 
-	//sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
+	sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
 
 	/*cout << "cities:" << endl;
 	for (auto& c : cities)
@@ -69,21 +73,12 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	for (auto& c : clouds)
 		cout << c.loc << " " << c.range << endl;*/
 
-	for (auto& cloud : clouds)
+	for (Cloud& cloud : clouds)
 	{
 		const auto cityIdx = getNearestItemPos(cloud.loc, cities);
 
-		//search all cities that covered by this cloud on right side
-		auto rCityIdx = cityIdx;
-		while (rCityIdx < cities.size() 
-			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range) 
-			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
-		{
-			cities[rCityIdx].clouds.push_back(&cloud);
-			cloud.cities.push_back(&cities[rCityIdx]);
-
-			rCityIdx++;
-		}
+		City* firstCity = nullptr;
+		City* lastCity = nullptr;
 
 		//search on left side
 		auto lCityIdx = cityIdx - 1;
@@ -93,9 +88,29 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		{
 			cities[lCityIdx].clouds.push_back(&cloud);
 			cloud.cities.push_back(&cities[lCityIdx]);
+			firstCity = &cities[lCityIdx];
 
 			lCityIdx--;
 		}
+
+		//search all cities that covered by this cloud on right side
+		auto rCityIdx = cityIdx;
+		while (rCityIdx < cities.size()
+			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range)
+			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
+		{
+			cities[rCityIdx].clouds.push_back(&cloud);
+			cloud.cities.push_back(&cities[rCityIdx]);
+			lastCity = &cities[rCityIdx];
+
+			if (firstCity == nullptr)
+				firstCity = lastCity;
+
+			rCityIdx++;
+		}
+
+		cloud.firstCity = firstCity;
+		cloud.lastCity = lastCity;
 	}
 
 	/*cout << endl;
@@ -129,10 +144,19 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	for (const Cloud& cloud : clouds)
 	{
 		long long curSunnyPop = 0;
-		for (const City* city : cloud.cities)
+		/*for (const City* city : cloud.cities)
 		{ 
 			if (city->clouds.size() == 1 && *(city->clouds.begin()) == &cloud)
 				curSunnyPop += city->pop;
+		}*/
+		if (cloud.firstCity)
+		{
+			auto lsTmp = cloud.lastCity;
+			lsTmp++;
+			auto endCity = lsTmp;
+			for (const City* city = cloud.firstCity; city != endCity; ++city)
+				if (city->clouds.size() == 1 && *(city->clouds.begin()) == &cloud)
+					curSunnyPop += city->pop;
 		}
 
 		if (curSunnyPop > maxSunnyPop)
@@ -165,7 +189,7 @@ int main()
 {
 	const auto begin_time = clock();
 
-	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input20.txt", std::ofstream::in);
+	ifstream fin("D:\\projects\\hackerrank\\cloudy_day\\cloudy_day\\input2.txt", std::ofstream::in);
 
 	int n;
 	fin >> n;
