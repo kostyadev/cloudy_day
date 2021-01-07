@@ -17,7 +17,7 @@ struct Cloud
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
-	vector<const City*> cities;
+	list<const City*> cities;
 };
 
 struct City
@@ -25,7 +25,7 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	vector<const Cloud*> clouds;
+	list<const Cloud*> clouds;
 };
 
 // binary search in sorted array
@@ -75,7 +75,9 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 		//search all cities that covered by this cloud on right side
 		auto rCityIdx = cityIdx;
-		while (rCityIdx < cities.size() && cities[rCityIdx].loc <= (cloud.loc + cloud.range) && cities[rCityIdx].loc >= (cloud.loc - cloud.range))
+		while (rCityIdx < cities.size() 
+			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range) 
+			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
 		{
 			cities[rCityIdx].clouds.push_back(&cloud);
 			cloud.cities.push_back(&cities[rCityIdx]);
@@ -85,7 +87,9 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 		//search on left side
 		auto lCityIdx = cityIdx - 1;
-		while (lCityIdx >= 0 && lCityIdx < cities.size() && cities[lCityIdx].loc <= (cloud.loc + cloud.range) && cities[lCityIdx].loc >= (cloud.loc - cloud.range))
+		while (lCityIdx >= 0 && lCityIdx < cities.size() 
+			&& cities[lCityIdx].loc <= (cloud.loc + cloud.range) 
+			&& cities[lCityIdx].loc >= (cloud.loc - cloud.range))
 		{
 			cities[lCityIdx].clouds.push_back(&cloud);
 			cloud.cities.push_back(&cities[lCityIdx]);
