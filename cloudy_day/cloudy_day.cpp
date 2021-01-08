@@ -72,41 +72,28 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 	for (Cloud& cloud : clouds)
 	{
-		const auto cityIdx = getNearestItemPos(cloud.loc, cities);
+		// find first city that are covered by this cloud
+		auto leftCityIt = lower_bound(cities.begin(), cities.end(), (cloud.loc - cloud.range), [](const auto& item, long val) { return item.loc < val; });
+		// find first left city that are NOT covered by this cloud
+		auto rightCityIt = upper_bound(cities.begin(), cities.end(), (cloud.loc + cloud.range), [](long val, const auto& item) { return val < item.loc; });
 
-		City* firstCity = nullptr;
-		City* lastCity = nullptr;
+		for (auto it = leftCityIt; it != rightCityIt; ++it)
+			(*it).cloudCount++;
 
-		//search on left side
-		auto lCityIdx = cityIdx - 1;
-		while (lCityIdx >= 0 && lCityIdx < cities.size() 
-			&& cities[lCityIdx].loc <= (cloud.loc + cloud.range) 
-			&& cities[lCityIdx].loc >= (cloud.loc - cloud.range))
+		const City* firstCity = (leftCityIt == cities.end()) ? nullptr : &(*leftCityIt);
+		const City* lastCity = nullptr;
+
+		if (firstCity)
 		{
-			cities[lCityIdx].cloudCount++;
-
-			firstCity = &cities[lCityIdx];
-
-			if (lastCity == nullptr)
-				lastCity = firstCity;
-
-			lCityIdx--;
-		}
-
-		//search all cities that covered by this cloud on right side
-		auto rCityIdx = cityIdx;
-		while (rCityIdx < cities.size()
-			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range)
-			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
-		{
-			cities[rCityIdx].cloudCount++;
-
-			lastCity = &cities[rCityIdx];
-
-			if (firstCity == nullptr)
-				firstCity = lastCity;
-
-			rCityIdx++;
+			if (rightCityIt != cities.end())
+			{
+				rightCityIt--;
+				lastCity = &(*rightCityIt);
+			}
+			else
+			{
+				lastCity = &cities.back();
+			}
 		}
 
 		cloud.firstCity = firstCity;
