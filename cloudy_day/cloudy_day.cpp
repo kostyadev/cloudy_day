@@ -17,7 +17,6 @@ struct Cloud
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
-	vector<const City*> cities;
 	const City* firstCity = nullptr;
 	const City* lastCity = nullptr;
 };
@@ -27,7 +26,6 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	const Cloud* cloud = nullptr;
 	size_t cloudCount = 0;
 };
 
@@ -85,10 +83,8 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 			&& cities[lCityIdx].loc <= (cloud.loc + cloud.range) 
 			&& cities[lCityIdx].loc >= (cloud.loc - cloud.range))
 		{
-			cities[lCityIdx].cloud = &cloud;
 			cities[lCityIdx].cloudCount++;
 
-			cloud.cities.push_back(&cities[lCityIdx]);
 			firstCity = &cities[lCityIdx];
 
 			if (lastCity == nullptr)
@@ -103,10 +99,8 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range)
 			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
 		{
-			cities[rCityIdx].cloud = &cloud;
 			cities[rCityIdx].cloudCount++;
 
-			cloud.cities.push_back(&cities[rCityIdx]);
 			lastCity = &cities[rCityIdx];
 
 			if (firstCity == nullptr)
@@ -161,7 +155,7 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 			lsTmp++;
 			const auto endCity = lsTmp;
 			for (const City* city = cloud.firstCity; city != endCity; ++city)
-				if (city->cloudCount == 1 && city->cloud == &cloud)
+				if (city->cloudCount == 1 /*&& city->cloud == &cloud*/)
 					curSunnyPop += city->pop;
 		}
 
@@ -195,7 +189,7 @@ int main()
 {
 	const auto begin_time = clock();
 
-	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input20.txt", std::ofstream::in);
+	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input21.txt", std::ofstream::in);
 
 	int n;
 	fin >> n;
