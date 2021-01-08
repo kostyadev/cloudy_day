@@ -29,18 +29,6 @@ struct City
 	size_t cloudCount = 0;
 };
 
-// binary search in sorted array
-size_t getNearestItemPos(const long pos, const vector<City>& cities)
-{
-	auto it = lower_bound(cities.begin(), cities.end(), pos, [](const auto& item, long val) { return item.loc < val; });
-	if (it == cities.end())
-	{
-		return cities.size() - 1;
-	}
-
-	return distance(cities.begin(), it);
-}
-
 // Complete the maximumPeople function below.
 long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_locs, const vector<long>& cloud_locs, const vector<long>& cloud_ranges)
 {
@@ -78,7 +66,7 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		auto rightCityIt = upper_bound(cities.begin(), cities.end(), (cloud.loc + cloud.range), [](long val, const auto& item) { return val < item.loc; });
 
 		for (auto it = leftCityIt; it != rightCityIt; ++it)
-			(*it).cloudCount++;
+			++(*it).cloudCount;
 
 		const City* firstCity = (leftCityIt == cities.end()) ? nullptr : &(*leftCityIt);
 		const City* lastCity = nullptr;
@@ -131,18 +119,13 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	for (const Cloud& cloud : clouds)
 	{
 		long long curSunnyPop = 0;
-		/*for (const City* city : cloud.cities)
-		{ 
-			if (city->clouds.size() == 1 && *(city->clouds.begin()) == &cloud)
-				curSunnyPop += city->pop;
-		}*/
 		if (cloud.firstCity)
 		{
 			auto lsTmp = cloud.lastCity;
 			lsTmp++;
 			const auto endCity = lsTmp;
 			for (const City* city = cloud.firstCity; city != endCity; ++city)
-				if (city->cloudCount == 1 /*&& city->cloud == &cloud*/)
+				if (city->cloudCount == 1)
 					curSunnyPop += city->pop;
 		}
 
