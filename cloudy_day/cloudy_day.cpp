@@ -27,9 +27,8 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	vector<const Cloud*> clouds;
-	const Cloud* firstCloud = nullptr;
-	const Cloud* lastCloud = nullptr;
+	const Cloud* cloud = nullptr;
+	size_t cloudCount = 0;
 };
 
 // binary search in sorted array
@@ -86,9 +85,14 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 			&& cities[lCityIdx].loc <= (cloud.loc + cloud.range) 
 			&& cities[lCityIdx].loc >= (cloud.loc - cloud.range))
 		{
-			cities[lCityIdx].clouds.push_back(&cloud);
+			cities[lCityIdx].cloud = &cloud;
+			cities[lCityIdx].cloudCount++;
+
 			cloud.cities.push_back(&cities[lCityIdx]);
 			firstCity = &cities[lCityIdx];
+
+			if (lastCity == nullptr)
+				lastCity = firstCity;
 
 			lCityIdx--;
 		}
@@ -99,7 +103,9 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 			&& cities[rCityIdx].loc <= (cloud.loc + cloud.range)
 			&& cities[rCityIdx].loc >= (cloud.loc - cloud.range))
 		{
-			cities[rCityIdx].clouds.push_back(&cloud);
+			cities[rCityIdx].cloud = &cloud;
+			cities[rCityIdx].cloudCount++;
+
 			cloud.cities.push_back(&cities[rCityIdx]);
 			lastCity = &cities[rCityIdx];
 
@@ -135,7 +141,7 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	long long alreadySunnyPop = 0;
 	for (const City& city : cities)
 	{
-		if (city.clouds.size() == 0)
+		if (city.cloudCount == 0)
 			alreadySunnyPop += city.pop;
 	}
 
@@ -153,9 +159,9 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		{
 			auto lsTmp = cloud.lastCity;
 			lsTmp++;
-			auto endCity = lsTmp;
+			const auto endCity = lsTmp;
 			for (const City* city = cloud.firstCity; city != endCity; ++city)
-				if (city->clouds.size() == 1 && *(city->clouds.begin()) == &cloud)
+				if (city->cloudCount == 1 && city->cloud == &cloud)
 					curSunnyPop += city->pop;
 		}
 
@@ -189,7 +195,7 @@ int main()
 {
 	const auto begin_time = clock();
 
-	ifstream fin("D:\\projects\\hackerrank\\cloudy_day\\cloudy_day\\input2.txt", std::ofstream::in);
+	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input20.txt", std::ofstream::in);
 
 	int n;
 	fin >> n;
