@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream> 
 #include <vector>
-#include <list>
 #include <algorithm>
 #include <string>
 #include <time.h>
@@ -26,7 +25,13 @@ struct City
 	long loc;
 	long pop;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-	size_t cloudCount = 0;
+};
+
+struct City2
+{
+	long pop;
+	unsigned char cloudCnt;
+	City2(long p = 0, unsigned char cCnt = 0) { pop = p; cloudCnt = cCnt; }
 };
 
 // Complete the maximumPeople function below.
@@ -40,6 +45,17 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	}
 
 	sort(cities.begin(), cities.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
+
+	vector<City2> cityCloudsPops;
+	cityCloudsPops.reserve(cities.size());
+	for (const City& c : cities)
+		cityCloudsPops.emplace_back(c.pop, 0);
+
+	/*vector<unsigned char> cityCloudCnt(cities.size(), 0);
+	vector<long> cityPops;
+	cityPops.reserve(cities.size());
+	for(const City& c : cities)
+		cityPops.push_back(c.pop);*/
 
 	vector<Cloud> clouds;
 	clouds.reserve(cloud_locs.size());
@@ -65,8 +81,13 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		// find first left city that are NOT covered by this cloud
 		auto rightCityIt = upper_bound(cities.begin(), cities.end(), (cloud.loc + cloud.range), [](long val, const auto& item) { return val < item.loc; });
 
-		for (auto it = leftCityIt; it != rightCityIt; ++it)
-			++(*it).cloudCount;
+		const auto idxEnd = rightCityIt - cities.begin();
+		const auto idxBegin = leftCityIt - cities.begin();
+		for(auto idx = idxBegin; idx != idxEnd; ++idx)
+		{
+			if (cityCloudsPops[idx].cloudCnt <= 1)
+				cityCloudsPops[idx].cloudCnt += 1;
+		}
 
 		const City* firstCity = (leftCityIt == cities.end()) ? nullptr : &(*leftCityIt);
 		const City* lastCity = nullptr;
@@ -108,10 +129,10 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 	// calculate count of cities that is not covered by any cloud
 	long long alreadySunnyPop = 0;
-	for (const City& city : cities)
+	for (size_t i = 0; i < cityCloudsPops.size(); ++i)
 	{
-		if (city.cloudCount == 0)
-			alreadySunnyPop += city.pop;
+		if (cityCloudsPops[i].cloudCnt == 0)
+			alreadySunnyPop += cityCloudsPops[i].pop;
 	}
 
 	// calculate maximum people that can be sunny by removing one cloud
@@ -119,14 +140,16 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 	for (const Cloud& cloud : clouds)
 	{
 		long long curSunnyPop = 0;
+		long long curSunnyPop2 = 0;
 		if (cloud.firstCity)
 		{
-			auto lsTmp = cloud.lastCity;
-			lsTmp++;
-			const auto endCity = lsTmp;
-			for (const City* city = cloud.firstCity; city != endCity; ++city)
-				if (city->cloudCount == 1)
-					curSunnyPop += city->pop;
+			const auto idxBegin = cloud.firstCity - &(*cities.begin());
+			const auto idxEnd = cloud.lastCity - &(*cities.begin()) + 1;
+			for(auto idx = idxBegin; idx != idxEnd; ++idx)
+			{
+				if (cityCloudsPops[idx].cloudCnt == 1)
+					curSunnyPop += cityCloudsPops[idx].pop;
+			}
 		}
 
 		if (curSunnyPop > maxSunnyPop)
