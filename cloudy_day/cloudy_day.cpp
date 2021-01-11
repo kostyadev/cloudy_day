@@ -16,22 +16,15 @@ struct Cloud
 	long loc;
 	long range;
 	Cloud(long l = 0, long r = 0) { loc = l; range = r; }
-	const City* firstCity = nullptr;
-	const City* lastCity = nullptr;
 };
 
 struct City
 {
 	long loc;
 	long pop;
+	long cloudCnt = 0;
 	City(long l = 0, long p = 0) { loc = l; pop = p; }
-};
-
-struct City2
-{
-	long pop;
-	unsigned char cloudCnt;
-	City2(long p = 0, unsigned char cCnt = 0) { pop = p; cloudCnt = cCnt; }
+	long cloudIncDec = 0;
 };
 
 // Complete the maximumPeople function below.
@@ -44,18 +37,8 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 		cities.emplace_back(city_locs[i], city_pops[i]);
 	}
 
+	// sort cities by location
 	sort(cities.begin(), cities.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
-
-	vector<City2> cityCloudsPops;
-	cityCloudsPops.reserve(cities.size());
-	for (const City& c : cities)
-		cityCloudsPops.emplace_back(c.pop, 0);
-
-	/*vector<unsigned char> cityCloudCnt(cities.size(), 0);
-	vector<long> cityPops;
-	cityPops.reserve(cities.size());
-	for(const City& c : cities)
-		cityPops.push_back(c.pop);*/
 
 	vector<Cloud> clouds;
 	clouds.reserve(cloud_locs.size());
@@ -66,14 +49,6 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 	sort(clouds.begin(), clouds.end(), [](const auto& a, const auto& b) { return a.loc < b.loc; });
 
-	/*cout << "cities:" << endl;
-	for (auto& c : cities)
-		cout << c.loc << " " << c.pop << endl;
-
-	cout << "clouds:" << endl;
-	for (auto& c : clouds)
-		cout << c.loc << " " << c.range << endl;*/
-
 	for (Cloud& cloud : clouds)
 	{
 		// find first city that are covered by this cloud
@@ -83,73 +58,62 @@ long long maximumPeople(const vector<long>& city_pops, const vector<long>& city_
 
 		const auto idxEnd = rightCityIt - cities.begin();
 		const auto idxBegin = leftCityIt - cities.begin();
-		for(auto idx = idxBegin; idx != idxEnd; ++idx)
-		{
-			if (cityCloudsPops[idx].cloudCnt <= 1)
-				cityCloudsPops[idx].cloudCnt += 1;
-		}
+		
+		if (idxBegin >= 0 && idxBegin < cities.size())
+			cities[idxBegin].cloudIncDec += 1;
 
-		const City* firstCity = (leftCityIt == cities.end()) ? nullptr : &(*leftCityIt);
-		const City* lastCity = nullptr;
-
-		if (firstCity)
-		{
-			if (rightCityIt != cities.end())
-			{
-				rightCityIt--;
-				lastCity = &(*rightCityIt);
-			}
-			else
-			{
-				lastCity = &cities.back();
-			}
-		}
-
-		cloud.firstCity = firstCity;
-		cloud.lastCity = lastCity;
+		if (idxEnd >= 0 && idxEnd < cities.size())
+			cities[idxEnd].cloudIncDec -= 1;
 	}
 
-	/*cout << endl;
-	for (size_t i = 0; i < cities.size(); ++i)
+	long curCloudCnt = 0;
+	for (City& city : cities)
 	{
-		cout << "cities[" << i << "], {loc " << cities[i].loc << ", pop " << cities[i].pop << "}, clouds [";
-		for (const auto& cloud : cities[i].clouds)
-			cout << "{loc " << cloud->loc << ", range " << cloud->range << "}";
-		cout << "]" << endl;
+		curCloudCnt += city.cloudIncDec;
+		city.cloudCnt = curCloudCnt;
 	}
 
-	cout << endl;
-	for (size_t i = 0; i < clouds.size(); ++i)
-	{
-		cout << "clouds[" << i << "], {loc " << clouds[i].loc << ", range " << clouds[i].range << "}, cities [";
-		for (const auto& city : clouds[i].cities)
-			cout << "{loc " << city->loc << ", pop " << city->pop << "}";
-		cout << "]" << endl;
-	}*/
+	// sort cities by covered cloud count
+	sort(cities.begin(), cities.end(), [](const auto& a, const auto& b) { return a.cloudCnt < b.cloudCnt; });
 
 	// calculate count of cities that is not covered by any cloud
 	long long alreadySunnyPop = 0;
-	for (size_t i = 0; i < cityCloudsPops.size(); ++i)
+	int lastOneCloudCityIdx = -1;
+	for (int i = 0; i < cities.size(); ++i)
 	{
-		if (cityCloudsPops[i].cloudCnt == 0)
-			alreadySunnyPop += cityCloudsPops[i].pop;
+		if (cities[i].cloudCnt > 1)
+			break;
+
+		if (cities[i].cloudCnt == 0)
+			alreadySunnyPop += cities[i].pop;
+
+		lastOneCloudCityIdx = i;
 	}
 
+	auto subArrBeg = cities.end();
+	auto subArrEnd = cities.end();
+	if (lastOneCloudCityIdx >= 0)
+	{
+		subArrBeg = cities.begin();
+		subArrEnd = subArrBeg + lastOneCloudCityIdx + 1;
+	}
+
+	// sort by location again, but this time should be faster 
+	// because we exclude all cities that are covered more than 1 cloud
+	sort(subArrBeg, subArrEnd, [](const auto& a, const auto& b) { return a.loc < b.loc; });
+	
 	// calculate maximum people that can be sunny by removing one cloud
 	long long maxSunnyPop = 0;
 	for (const Cloud& cloud : clouds)
 	{
 		long long curSunnyPop = 0;
-		long long curSunnyPop2 = 0;
-		if (cloud.firstCity)
+		auto leftCityIt = lower_bound(subArrBeg, subArrEnd, (cloud.loc - cloud.range), [](const auto& item, long val) { return item.loc < val; });
+		auto rightCityIt = upper_bound(subArrBeg, subArrEnd, (cloud.loc + cloud.range), [](long val, const auto& item) { return val < item.loc; });
+
+		for (auto it = leftCityIt; it != rightCityIt; ++it)
 		{
-			const auto idxBegin = cloud.firstCity - &(*cities.begin());
-			const auto idxEnd = cloud.lastCity - &(*cities.begin()) + 1;
-			for(auto idx = idxBegin; idx != idxEnd; ++idx)
-			{
-				if (cityCloudsPops[idx].cloudCnt == 1)
-					curSunnyPop += cityCloudsPops[idx].pop;
-			}
+			if (it->cloudCnt == 1)
+				curSunnyPop += it->pop;
 		}
 
 		if (curSunnyPop > maxSunnyPop)
@@ -182,7 +146,7 @@ int main()
 {
 	const auto begin_time = clock();
 
-	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input21.txt", std::ofstream::in);
+	ifstream fin("D:\\projects\\hacker_rank\\cloudy_day\\cloudy_day\\input22.txt", std::ofstream::in);
 
 	int n;
 	fin >> n;
